@@ -49,42 +49,127 @@ public class DNA {
 
 	}
 
-	private static String[] commonDNA(int[][] g, String name1, String name2) {
-		String word1 = "";
-		String word2 = "";
+	private static String[] commonDNA2(int[][] g, String seqOne, String seqTwo) {
+
+		seqOne = "-" + seqOne;
+		seqTwo = "-" + seqTwo;
+		String resultOne = "";
+		String resultTwo = "";
 		int i = g.length - 1;
 		int j = g[0].length - 1;
-		while (!(i == 1 && j == 1)) {
-			final int left = g[i][j - 1];
-			final int up = g[i - 1][j];
-			final int diag = g[i - 1][j - 1];
+		while ((i > 0 || j > 0)) {
+			int left = Integer.MIN_VALUE;
+			if (j != 0) {
+				left = g[i][j - 1] + phi;
+			}
+			int up = Integer.MIN_VALUE;
+			if (i != 0) {
+				up = g[i - 1][j] + phi;
+			}
+			int diag = Integer.MIN_VALUE;
+			if (j != 0 && i != 0) {
+				diag = g[i - 1][j - 1]
+						+ BLOSUM.get(Character.toString(seqOne.charAt(i))
+								+ Character.toString(seqTwo.charAt(j)));
+			}
+
+			// Math.max(BLOSUM.get(key) + graph[i - 1][j - 1],Math.max(phi +
+			// graph[i - 1][j], phi + graph[i][j - 1])
 
 			int biggest = biggestOf(up, left, diag);
 			if (diag == biggest) {
-				word2 += name1.charAt(i - 1);
-				word1 += name2.charAt(j - 1);
+				resultTwo += seqTwo.charAt(j);
+				resultOne += seqOne.charAt(i);
 				if (i > 0)
 					i--;
 				if (j > 0)
 					j--;
 
 			} else if (left == biggest) {
-				word2 += "-";
-				word1 += name2.charAt(j - 1);
-				if (i > 0)
+				resultTwo += "-";
+				resultOne += seqOne.charAt(i);
+				if (j > 0)
 					j--;
 			} else if (up == biggest) {
-				word1 += "-";
-				word2 += name2.charAt(i - 1);
-				if (j > 0)
+				resultOne += "-";
+				resultTwo += seqTwo.charAt(j);
+				if (i > 0)
 					i--;
 
 			}
 
 		}
 
-		String[] list = { word1, word2 };
+		String[] list = { resultOne, resultTwo };
 		return list;
+	}
+
+	private static String[] commonDNA(int[][] g, String seqRow, String seqCol) {
+		// seqRow = "#" + seqRow;
+		// seqCol = "#" + seqCol;
+		int row = g.length - 1;
+		int column = g[0].length - 1;
+		String dnaRow = "";
+		String dnaCol = "";
+
+		while (row != 0 || column != 0) {
+			int compensate = 1;
+			if (row == 0) {
+				compensate = 0;
+			}
+			int compensate2 = 1;
+			if (column == 0) {
+				compensate2 = 0;
+			}
+			String key = Character.toString(seqRow.charAt(row - compensate))
+					+ Character.toString(seqCol.charAt(column - compensate2));
+
+			int diag;
+			if (row == 0 || column == 0) {
+				diag = Integer.MIN_VALUE;
+			} else {
+				diag = BLOSUM.get(key) + g[row - 1][column - 1];
+			}
+			int left = Integer.MIN_VALUE;
+			int up = Integer.MIN_VALUE;
+			if (row != 0) {
+				up = phi + g[row - 1][column];
+			}
+			if (column != 0) {
+				left = phi + g[row][column - 1];
+			}
+
+			int current = g[row][column];
+
+			if (current == diag) {
+				dnaRow = Character.toString(seqRow.charAt(row - 1)) + dnaRow;
+				dnaCol = Character.toString(seqCol.charAt(column - 1)) + dnaCol;
+				if (row != 0) {
+					row--;
+				}
+				if (column != 0) {
+					column--;
+				}
+
+			} else if (current == up) {
+				dnaRow = Character.toString(seqRow.charAt(row - 1)) + dnaRow;
+				dnaCol = "-" + dnaCol;
+				if (row != 0) {
+					row--;
+				}
+			} else if (current == left) {
+				dnaCol = Character.toString(seqCol.charAt(column - 1)) + dnaCol;
+				dnaRow = "-" + dnaRow;
+				if (column != 0) {
+					column--;
+				}
+			}
+
+		}
+
+		String[] list = { dnaCol, dnaRow };
+		return list;
+
 	}
 
 	private static int biggestOf(int a, int b, int c) {
